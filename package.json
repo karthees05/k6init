@@ -1,0 +1,20 @@
+{
+  "name": "k6init",
+  "version": "1.0.0",
+  "description": "K6 TypeScript API performance test suite",
+  "private": true,
+  "scripts": {
+    "build": "webpack --config webpack.config.js",
+    "smokeTest": "npm run build && k6 run dist/jsonPlaceholderSimulation.js -e ENV=dev -e LOAD_PROFILE=fixed -e USERS=1 -e DURATION_SECONDS=10",
+    "rampTest": "npm run build && k6 run dist/jsonPlaceholderSimulation.js -e ENV=dev -e LOAD_PROFILE=ramp-up -e USERS=20 -e DURATION_SECONDS=120",
+    "spikeTest": "npm run build && k6 run dist/jsonPlaceholderSimulation.js -e ENV=dev -e LOAD_PROFILE=spike -e USERS=50 -e DURATION_SECONDS=120",
+    "peakTest": "npm run build && k6 run dist/jsonPlaceholderSimulation.js -e ENV=dev -e LOAD_PROFILE=peak -e USERS=50 -e DURATION_SECONDS=180"
+  },
+  "devDependencies": {
+    "@types/k6": "^0.54.2",
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.8.3",
+    "webpack": "^5.99.8",
+    "webpack-cli": "^6.0.1"
+  }
+}

@@ -1,0 +1,7 @@
+node_modules/
+dist/
+coverage/
+k6-summary.json
+k6-summary.html
+npm-debug.log*
+.DS_Store
