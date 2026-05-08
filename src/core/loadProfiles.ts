@@ -13,7 +13,9 @@ export function buildOptions(config: RuntimeConfig): Options {
     },
     tags: {
       environment: config.environment.name,
-      loadProfile: config.loadProfile
+      loadProfile: config.loadProfile,
+      initialUsers: String(config.initialUsers),
+      users: String(config.users)
     }
   };
 
@@ -23,7 +25,7 @@ export function buildOptions(config: RuntimeConfig): Options {
       scenarios: {
         api_journey: {
           executor: 'ramping-vus',
-          startVUs: 1,
+          startVUs: config.initialUsers,
           stages: [{ target: config.users, duration: seconds(config.durationSeconds) }],
           gracefulRampDown: '10s',
           exec: 'jsonPlaceholderJourney'
@@ -38,12 +40,12 @@ export function buildOptions(config: RuntimeConfig): Options {
       scenarios: {
         api_journey: {
           executor: 'ramping-vus',
-          startVUs: 0,
+          startVUs: config.initialUsers,
           stages: [
-            { target: 1, duration: seconds(config.durationSeconds * 0.2) },
+            { target: config.initialUsers, duration: seconds(config.durationSeconds * 0.2) },
             { target: config.users, duration: seconds(config.durationSeconds * 0.1) },
             { target: config.users, duration: seconds(config.durationSeconds * 0.6) },
-            { target: 0, duration: seconds(config.durationSeconds * 0.1) }
+            { target: config.initialUsers, duration: seconds(config.durationSeconds * 0.1) }
           ],
           gracefulRampDown: '10s',
           exec: 'jsonPlaceholderJourney'
@@ -58,11 +60,11 @@ export function buildOptions(config: RuntimeConfig): Options {
       scenarios: {
         api_journey: {
           executor: 'ramping-vus',
-          startVUs: 1,
+          startVUs: config.initialUsers,
           stages: [
             { target: config.users, duration: seconds(config.durationSeconds * 0.25) },
             { target: config.users, duration: seconds(config.durationSeconds * 0.5) },
-            { target: 0, duration: seconds(config.durationSeconds * 0.25) }
+            { target: config.initialUsers, duration: seconds(config.durationSeconds * 0.25) }
           ],
           gracefulRampDown: '10s',
           exec: 'jsonPlaceholderJourney'

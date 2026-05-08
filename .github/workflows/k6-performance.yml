@@ -27,9 +27,13 @@ on:
           - spike
           - peak
       users:
-        description: Virtual users
+        description: Fixed profile users, or target users for ramp-up/spike/peak
         required: false
         default: '5'
+      initial_users:
+        description: Initial users for ramp-up/spike/peak. Ignored by fixed.
+        required: false
+        default: '1'
       duration_seconds:
         description: Duration in seconds
         required: false
@@ -46,6 +50,7 @@ jobs:
       TEST_ENV: ${{ github.event.inputs.environment || 'dev' }}
       LOAD_PROFILE: ${{ github.event.inputs.load_profile || 'fixed' }}
       USERS: ${{ github.event.inputs.users || '5' }}
+      INITIAL_USERS: ${{ github.event.inputs.initial_users || '1' }}
       DURATION_SECONDS: ${{ github.event.inputs.duration_seconds || '30' }}
       BASE_URL: ${{ github.event.inputs.base_url || '' }}
 
@@ -65,6 +70,25 @@ jobs:
       - name: Build TypeScript suite
         run: npm run build
 
+      - name: Validate load profile parameters
+        run: |
+          case "${USERS}" in
+            ''|*[!0-9]*)
+              echo "users must be a positive whole number."
+              exit 1
+              ;;
+          esac
+          case "${INITIAL_USERS}" in
+            ''|*[!0-9]*)
+              echo "initial_users must be a positive whole number."
+              exit 1
+              ;;
+          esac
+          if [ "${LOAD_PROFILE}" != "fixed" ] && [ "${INITIAL_USERS}" -gt "${USERS}" ]; then
+            echo "initial_users must be less than or equal to users for ${LOAD_PROFILE}."
+            exit 1
+          fi
+
       - name: Setup k6
         uses: grafana/setup-k6-action@v1
 
@@ -72,7 +96,7 @@ jobs:
         uses: grafana/run-k6-action@v1
         with:
           path: dist/jsonPlaceholderSimulation.js
-          flags: -e ENV=${{ env.TEST_ENV }} -e LOAD_PROFILE=${{ env.LOAD_PROFILE }} -e USERS=${{ env.USERS }} -e DURATION_SECONDS=${{ env.DURATION_SECONDS }} -e BASE_URL=${{ env.BASE_URL }}
+          flags: -e ENV=${{ env.TEST_ENV }} -e LOAD_PROFILE=${{ env.LOAD_PROFILE }} -e INITIAL_USERS=${{ env.INITIAL_USERS }} -e USERS=${{ env.USERS }} -e DURATION_SECONDS=${{ env.DURATION_SECONDS }} -e BASE_URL=${{ env.BASE_URL }}
 
       - name: Upload k6 reports
         if: always()

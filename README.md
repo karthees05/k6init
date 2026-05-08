@@ -8,6 +8,7 @@ This project is a K6-based TypeScript framework for API performance testing. It 
 - Parameterized environment selection with `ENV` and optional `BASE_URL` override
 - Configurable load profiles: `fixed`, `ramp-up`, `spike`, `peak`
 - Configurable virtual users with `USERS`
+- Configurable initial users for ramping profiles with `INITIAL_USERS`
 - Configurable duration with `DURATION_SECONDS`
 - Reusable K6 load-profile helpers
 - Reusable API journey methods for `GET`, `POST`, `PUT`, `PATCH`, and `DELETE`
@@ -61,6 +62,12 @@ dist/jsonPlaceholderSimulation.js
 ```
 
 ## Profile Commands
+
+Interactive local runner. This asks only for the parameters needed by the selected profile:
+
+```bash
+npm run run:local
+```
 
 Smoke test:
 
@@ -117,6 +124,7 @@ Ramp-up with custom users and duration:
 k6 run dist/jsonPlaceholderSimulation.js \
   -e ENV=qa \
   -e LOAD_PROFILE=ramp-up \
+  -e INITIAL_USERS=5 \
   -e USERS=50 \
   -e DURATION_SECONDS=180
 ```
@@ -127,6 +135,7 @@ Spike with higher load:
 k6 run dist/jsonPlaceholderSimulation.js \
   -e ENV=prod \
   -e LOAD_PROFILE=spike \
+  -e INITIAL_USERS=5 \
   -e USERS=100 \
   -e DURATION_SECONDS=120
 ```
@@ -137,6 +146,7 @@ Peak with a controlled rise and fall:
 k6 run dist/jsonPlaceholderSimulation.js \
   -e ENV=prod \
   -e LOAD_PROFILE=peak \
+  -e INITIAL_USERS=10 \
   -e USERS=80 \
   -e DURATION_SECONDS=240
 ```
@@ -154,9 +164,11 @@ k6 run dist/jsonPlaceholderSimulation.js \
 ## Load Profile Semantics
 
 - `fixed`: keeps the requested number of virtual users constant for the whole test
-- `ramp-up`: ramps from 1 virtual user to the requested number during the whole test
-- `spike`: stays quiet first, surges quickly to the requested number of users, holds, then ramps down
-- `peak`: ramps up, sustains the peak, then ramps back down
+- `ramp-up`: starts at `INITIAL_USERS` and ramps to `USERS` during the whole test
+- `spike`: starts at `INITIAL_USERS`, surges quickly to `USERS`, holds, then ramps back to `INITIAL_USERS`
+- `peak`: starts at `INITIAL_USERS`, ramps to `USERS`, sustains the peak, then ramps back to `INITIAL_USERS`
+
+For `fixed`, `USERS` is the constant virtual user count and `INITIAL_USERS` is ignored. For `ramp-up`, `spike`, and `peak`, `INITIAL_USERS` is the starting load and `USERS` is the target or peak load.
 
 ## API Journey
 
@@ -226,7 +238,8 @@ Manual workflow inputs:
 
 - `environment`: `dev`, `qa`, or `prod`
 - `load_profile`: `fixed`, `ramp-up`, `spike`, or `peak`
-- `users`: virtual users
+- `users`: fixed users for `fixed`, or target/peak users for `ramp-up`, `spike`, and `peak`
+- `initial_users`: starting users for `ramp-up`, `spike`, and `peak`; ignored by `fixed`
 - `duration_seconds`: test duration
 - `base_url`: optional target URL override
 
