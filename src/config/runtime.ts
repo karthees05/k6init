@@ -5,6 +5,7 @@ export type LoadProfile = 'fixed' | 'ramp-up' | 'spike' | 'peak';
 export type RuntimeConfig = {
   environment: EnvironmentConfig;
   loadProfile: LoadProfile;
+  initialUsers: number;
   users: number;
   durationSeconds: number;
 };
@@ -43,6 +44,7 @@ export function getRuntimeConfig(): RuntimeConfig {
   return {
     environment: getEnvironment(envValue('ENV', 'env'), envValue('BASE_URL', 'baseUrl')),
     loadProfile: loadProfileValue(envValue('LOAD_PROFILE', 'loadProfile')),
+    initialUsers: numberValue(envValue('INITIAL_USERS', 'initialUsers'), 1),
     users: numberValue(envValue('USERS', 'users'), 10),
     durationSeconds: numberValue(envValue('DURATION_SECONDS', 'durationSeconds'), 60)
   };
