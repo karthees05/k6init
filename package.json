@@ -6,6 +6,7 @@
   "scripts": {
     "build": "webpack --config webpack.config.js",
     "run:local": "node scripts/run-k6.js",
+    "run:grafana": "npm run build && k6 cloud run --local-execution dist/jsonPlaceholderSimulation.js -e ENV=dev -e LOAD_PROFILE=fixed -e USERS=5 -e DURATION_SECONDS=30",
     "smokeTest": "npm run build && k6 run dist/jsonPlaceholderSimulation.js -e ENV=dev -e LOAD_PROFILE=fixed -e USERS=1 -e DURATION_SECONDS=10",
     "rampTest": "npm run build && k6 run dist/jsonPlaceholderSimulation.js -e ENV=dev -e LOAD_PROFILE=ramp-up -e INITIAL_USERS=1 -e USERS=20 -e DURATION_SECONDS=120",
     "spikeTest": "npm run build && k6 run dist/jsonPlaceholderSimulation.js -e ENV=dev -e LOAD_PROFILE=spike -e INITIAL_USERS=1 -e USERS=50 -e DURATION_SECONDS=120",

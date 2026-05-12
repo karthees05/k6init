@@ -14,7 +14,8 @@ This project is a K6-based TypeScript framework for API performance testing. It 
 - Reusable API journey methods for `GET`, `POST`, `PUT`, `PATCH`, and `DELETE`
 - Scenario structure based on a user journey instead of isolated single requests
 - HTML and JSON reports after each K6 run
-- GitHub Actions workflow for build, K6 execution, and report artifact upload
+- Optional Grafana Cloud k6 dashboard upload
+- GitHub Actions workflow for build, K6 execution, Grafana Cloud k6 upload, and report artifact upload
 
 ## Project Structure
 
@@ -91,6 +92,12 @@ Peak profile:
 
 ```bash
 npm run peakTest
+```
+
+Run locally and stream results to Grafana Cloud k6:
+
+```bash
+npm run run:grafana
 ```
 
 ## Example Commands
@@ -215,6 +222,47 @@ open k6-summary.html
 
 In GitHub Actions, download the artifact named `k6-reports` from the workflow run. It contains both `k6-summary.html` and `k6-summary.json`.
 
+## Grafana Cloud k6 Dashboard
+
+Grafana Cloud k6 is the dashboard option for these runs. It gives you run history, response-time graphs, throughput, checks, thresholds, failures, and links from CI.
+
+Your Grafana stack URL is:
+
+```text
+https://iabdemo.grafana.net
+```
+
+To enable CI upload, add these repository secrets in GitHub:
+
+```text
+K6_CLOUD_TOKEN
+K6_CLOUD_PROJECT_ID
+```
+
+Where to get them in Grafana Cloud:
+
+1. Open `https://iabdemo.grafana.net`
+2. Go to `Testing & synthetics` -> `Performance` -> `Settings`
+3. Copy or create a k6 API token
+4. Copy the project ID for the k6 project you want these runs stored under
+5. Add both values in GitHub under `Settings` -> `Secrets and variables` -> `Actions`
+
+After the secrets are configured, GitHub Actions streams results to Grafana Cloud k6 automatically when `upload_to_grafana` is `true`. The workflow logs print the Grafana Cloud k6 test run IDs, and pull requests receive a link to the cloud run when PR comments are enabled.
+
+For local dashboard upload, authenticate once:
+
+```bash
+k6 cloud login --token <YOUR_K6_CLOUD_TOKEN> --stack iabdemo
+```
+
+Then run:
+
+```bash
+npm run run:grafana
+```
+
+K6 prints the Grafana Cloud k6 run URL in the terminal.
+
 ## Reports And Metrics
 
 Every run writes a K6 summary to stdout, `k6-summary.html`, and `k6-summary.json`.
@@ -242,8 +290,9 @@ Manual workflow inputs:
 - `initial_users`: starting users for `ramp-up`, `spike`, and `peak`; ignored by `fixed`
 - `duration_seconds`: test duration
 - `base_url`: optional target URL override
+- `upload_to_grafana`: uploads results to Grafana Cloud k6 when `K6_CLOUD_TOKEN` and `K6_CLOUD_PROJECT_ID` secrets are configured
 
-The workflow installs dependencies with `npm ci`, builds the TypeScript suite with `npm run build`, installs K6 using `grafana/setup-k6-action@v1`, runs the bundled simulation with `grafana/run-k6-action@v1`, and uploads `k6-summary.html` plus `k6-summary.json` as the `k6-reports` artifact.
+The workflow installs dependencies with `npm ci`, builds the TypeScript suite with `npm run build`, installs K6 using `grafana/setup-k6-action@v1`, runs the bundled simulation with `grafana/run-k6-action@v1`, streams results to Grafana Cloud k6 when secrets are configured, and uploads `k6-summary.html` plus `k6-summary.json` as the `k6-reports` artifact.
 
 ## Notes
 

@@ -42,6 +42,11 @@ on:
         description: Optional base URL override
         required: false
         default: ''
+      upload_to_grafana:
+        description: Upload results to Grafana Cloud k6
+        required: false
+        default: true
+        type: boolean
 
 jobs:
   k6:
@@ -53,6 +58,10 @@ jobs:
       INITIAL_USERS: ${{ github.event.inputs.initial_users || '1' }}
       DURATION_SECONDS: ${{ github.event.inputs.duration_seconds || '30' }}
       BASE_URL: ${{ github.event.inputs.base_url || '' }}
+      UPLOAD_TO_GRAFANA: ${{ github.event.inputs.upload_to_grafana || 'true' }}
+      HAS_GRAFANA_CLOUD_CONFIG: ${{ secrets.K6_CLOUD_TOKEN != '' && secrets.K6_CLOUD_PROJECT_ID != '' }}
+      K6_CLOUD_TOKEN: ${{ secrets.K6_CLOUD_TOKEN }}
+      K6_CLOUD_PROJECT_ID: ${{ secrets.K6_CLOUD_PROJECT_ID }}
 
     steps:
       - name: Checkout
@@ -92,10 +101,32 @@ jobs:
       - name: Setup k6
         uses: grafana/setup-k6-action@v1
 
-      - name: Run k6 suite
+      - name: Run k6 suite and upload to Grafana Cloud k6
+        if: env.UPLOAD_TO_GRAFANA == 'true' && env.HAS_GRAFANA_CLOUD_CONFIG == 'true'
+        id: run_k6_cloud
+        uses: grafana/run-k6-action@v1
+        env:
+          K6_CLOUD_TOKEN: ${{ env.K6_CLOUD_TOKEN }}
+          K6_CLOUD_PROJECT_ID: ${{ env.K6_CLOUD_PROJECT_ID }}
+        with:
+          path: dist/jsonPlaceholderSimulation.js
+          cloud-run-locally: true
+          cloud-comment-on-pr: true
+          debug: true
+          flags: -e ENV=${{ env.TEST_ENV }} -e LOAD_PROFILE=${{ env.LOAD_PROFILE }} -e INITIAL_USERS=${{ env.INITIAL_USERS }} -e USERS=${{ env.USERS }} -e DURATION_SECONDS=${{ env.DURATION_SECONDS }} -e BASE_URL=${{ env.BASE_URL }}
+
+      - name: Print Grafana Cloud k6 run IDs
+        if: env.UPLOAD_TO_GRAFANA == 'true' && env.HAS_GRAFANA_CLOUD_CONFIG == 'true'
+        run: echo "Grafana Cloud k6 test run IDs - ${TEST_RUN_IDS}"
+        env:
+          TEST_RUN_IDS: ${{ steps.run_k6_cloud.outputs.testRunIds }}
+
+      - name: Run k6 suite locally only
+        if: env.UPLOAD_TO_GRAFANA != 'true' || env.HAS_GRAFANA_CLOUD_CONFIG != 'true'
         uses: grafana/run-k6-action@v1
         with:
           path: dist/jsonPlaceholderSimulation.js
+          debug: true
           flags: -e ENV=${{ env.TEST_ENV }} -e LOAD_PROFILE=${{ env.LOAD_PROFILE }} -e INITIAL_USERS=${{ env.INITIAL_USERS }} -e USERS=${{ env.USERS }} -e DURATION_SECONDS=${{ env.DURATION_SECONDS }} -e BASE_URL=${{ env.BASE_URL }}
 
       - name: Upload k6 reports
